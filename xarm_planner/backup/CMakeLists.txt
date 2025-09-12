@@ -101,15 +101,6 @@ target_link_libraries(test_xarm_gripper_planner_api_joint
   ${ament_LIBRARIES}
 )
 
-add_executable(add_scene test/add_scene.cpp)
-ament_target_dependencies(add_scene
-  ${dependencies}
-)
-target_link_libraries(add_scene
-  xarm_planner
-  ${ament_LIBRARIES}
-)
-
 add_executable(test_xarm_planner_client_joint test/test_xarm_planner_client_joint.cpp)
 ament_target_dependencies(test_xarm_planner_client_joint
   ${dependencies}
@@ -159,7 +150,6 @@ install(
   test_xarm_planner_client_pose
   test_xarm_gripper_planner_client_joint
   test_lite_gripper_realmove
-  add_scene
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
