@@ -1,3 +1,5 @@
 [submodule "xarm_sdk/cxx"]
 	path = xarm_sdk/cxx
 	url = https://github.com/xArm-Developer/xArm-CPLUS-SDK.git
+[submodule "src/xarm_ros2"]
+	url = https://github.com/mtchun1/xarm_ros2.git
