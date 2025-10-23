@@ -29,6 +29,7 @@ find_package(control_msgs REQUIRED)
 find_package(moveit_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(moveit_ros_planning REQUIRED)
+find_package(moveit_ros_planning_interface REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -51,6 +52,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   moveit_msgs
   geometry_msgs
   moveit_ros_planning
+  moveit_ros_planning_interface
 )
 
 include_directories(
@@ -60,17 +62,25 @@ include_directories(
 
 add_library(xarm_joystick_input SHARED src/xarm_joystick_input.cpp)
 ament_target_dependencies(xarm_joystick_input ${THIS_PACKAGE_INCLUDE_DEPENDS})
-rclcpp_components_register_nodes(xarm_joystick_input "xarm_moveit_servo::JoyToServoPub")
+# rclcpp_components_register_nodes(xarm_joystick_input "xarm_moveit_servo::JoyToServoPub")
+rclcpp_components_register_node(xarm_joystick_input PLUGIN "xarm_moveit_servo::JoyToServoPub" EXECUTABLE xarm_joystick_input_node)
 
 add_executable(xarm_keyboard_input
   src/xarm_keyboard_input.cpp
 )
 ament_target_dependencies(xarm_keyboard_input ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
+add_executable(xarm_servo_scene
+  src/xarm_servo_scene.cpp
+)
+ament_target_dependencies(xarm_servo_scene ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
 
 install(TARGETS
   xarm_joystick_input
+  xarm_joystick_input_node
   xarm_keyboard_input
+  xarm_servo_scene
   EXPORT export_${PROJECT_NAME}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
