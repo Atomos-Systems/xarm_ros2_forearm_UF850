@@ -64,6 +64,9 @@ void addCollisionObject(
         { "wall2", BOX, {2.5, 0.150, 1.0},
           0.0,  -1.720 - 0.150/2.0, 0.5 + Z_AXIS_RAISE,
           0, 0, 0, 1 },
+        { "wall3", BOX, {0.150, 2.5, 1.0},
+          -0.7-0.150/2.0,  0.0, 0.5 + Z_AXIS_RAISE,
+          0, 0, 0, 1 },
     };
 
     // --- (The logic to build the vector of CollisionObjects is identical) ---
