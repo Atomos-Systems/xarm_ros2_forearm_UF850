@@ -4,7 +4,6 @@
 # Copyright (c) 2024, UFACTORY, Inc.
 # All rights reserved.
 #
-# Author: OpenAI Assistant
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
