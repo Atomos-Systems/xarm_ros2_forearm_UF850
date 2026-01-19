@@ -29,7 +29,7 @@ find_package(control_msgs REQUIRED)
 find_package(moveit_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(moveit_ros_planning REQUIRED)
-find_package(moveit_ros_planning_interface REQUIRED)
+find_package(xarm_msgs REQUIRED)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -42,6 +42,11 @@ if(BUILD_TESTING)
   ament_lint_auto_find_test_dependencies()
 endif()
 
+include_directories(
+  include
+  ${ament_INCLUDE_DIRS}
+)
+
 set(THIS_PACKAGE_INCLUDE_DEPENDS
   rclcpp
   rclcpp_components
@@ -52,12 +57,7 @@ set(THIS_PACKAGE_INCLUDE_DEPENDS
   moveit_msgs
   geometry_msgs
   moveit_ros_planning
-  moveit_ros_planning_interface
-)
-
-include_directories(
-  include
-  ${ament_INCLUDE_DIRS}
+  xarm_msgs
 )
 
 add_library(xarm_joystick_input SHARED src/xarm_joystick_input.cpp)
@@ -75,12 +75,25 @@ add_executable(xarm_servo_scene
 )
 ament_target_dependencies(xarm_servo_scene ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
+add_executable(xarm_servo_scene_pilotus
+  src/xarm_servo_scene_pilotus.cpp
+)
+ament_target_dependencies(xarm_servo_scene_pilotus ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
+
+add_executable(xarm_track_pose
+  src/xarm_track_pose.cpp
+)
+ament_target_dependencies(xarm_track_pose ${THIS_PACKAGE_INCLUDE_DEPENDS})
+
 
 install(TARGETS
   xarm_joystick_input
   xarm_joystick_input_node
   xarm_keyboard_input
   xarm_servo_scene
+  xarm_servo_scene_pilotus
+  xarm_track_pose
   EXPORT export_${PROJECT_NAME}
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
