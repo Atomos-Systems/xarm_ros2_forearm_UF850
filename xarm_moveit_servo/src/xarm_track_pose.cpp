@@ -11,57 +11,53 @@
 #include <array>
 #include <mutex>
 
-/**
- * \brief Generates the path to follow
- */
-std::vector<Eigen::Vector3d> getPath()
-{
-  const double start_angle = M_PI / 2 + (M_PI / 8);
-  const double end_angle = M_PI;
-  const double step = 0.01745329;
-  std::vector<Eigen::Vector3d> traj;
+#define PUBLISH_RATE 100.0
 
-  for (double i = start_angle; i < end_angle; i = i + step)
+/**
+ * \brief Generates a linear trajectory that moves the end-effector 0.1m in the z direction
+ * \param start_pose The starting pose of the end-effector
+ * \return Vector of waypoint positions (x, y, z) with z increasing by 0.1m
+ */
+std::vector<Eigen::Vector3d> getPath(const geometry_msgs::msg::PoseStamped& start_pose)
+{
+  // Hardcoded trajectory parameters
+  const double duration = 2.0;  // Duration in seconds
+  const double z_displacement = -0.1;  // Move 0.1m in z direction
+  
+  // Extract starting position
+  const double start_x = start_pose.pose.position.x;
+  const double start_y = start_pose.pose.position.y;
+  const double start_z = start_pose.pose.position.z;
+  
+  // Calculate target position
+  const double target_z = start_z + z_displacement;
+  
+  // Calculate number of waypoints based on duration and publish rate
+  const int num_waypoints = static_cast<int>(duration * PUBLISH_RATE);
+  const double step_size = 1.0 / num_waypoints;  // Normalized step (0.0 to 1.0)
+  
+  std::vector<Eigen::Vector3d> traj;
+  traj.reserve(num_waypoints);
+  
+  // Generate waypoints with linear interpolation in z direction
+  for (int i = 0; i <= num_waypoints; ++i)
   {
-    double x = 0.8 + (0.5 * cos(i));
-    double y = 0.0 + (0.5 * sin(i));
-    auto vec = Eigen::Vector3d(x, y, 0.4);
+    const double t = i * step_size;  // Interpolation parameter [0.0, 1.0]
+    const double z = start_z + t * z_displacement;  // Linear interpolation in z
+    
+    // x and y remain constant, only z changes
+    auto vec = Eigen::Vector3d(start_x, start_y, z);
     traj.push_back(vec);
   }
+  
   return traj;
 }
 
 /**
- * \brief Creates an Rviz marker message to represent a waypoint in the path.
- */
-visualization_msgs::msg::Marker getMarker(int id, const Eigen::Vector3d& position, const std::string& frame)
-{
-  visualization_msgs::msg::Marker marker;
-  marker.header.frame_id = frame;
-  marker.header.stamp = rclcpp::Time(0.0);
-  marker.id = id;
-  marker.type = visualization_msgs::msg::Marker::SPHERE;
-  marker.action = visualization_msgs::msg::Marker::ADD;
-  marker.pose.position.x = position.x();
-  marker.pose.position.y = position.y();
-  marker.pose.position.z = position.z();
-  marker.pose.orientation.x = 0.0;
-  marker.pose.orientation.y = 0.0;
-  marker.pose.orientation.z = 0.0;
-  marker.pose.orientation.w = 1.0;
-  marker.scale.x = 0.01;
-  marker.scale.y = 0.01;
-  marker.scale.z = 0.01;
-  marker.color.a = 1.0;
-  marker.color.r = 0.0;
-  marker.color.g = 1.0;
-  marker.color.b = 0.0;
-  id++;
-  return marker;
-}
-
-/**
  * \brief Generates a PoseStamped message with the given position and orientation.
+ * \param position The position of the end-effector
+ * \param rotation The orientation of the end-effector
+ * \return geometry_msgs::PoseStamped with position in meters and orientation as quaternion
  */
 geometry_msgs::msg::PoseStamped getPose(const Eigen::Vector3d& position, const Eigen::Quaterniond& rotation)
 {
@@ -78,23 +74,23 @@ geometry_msgs::msg::PoseStamped getPose(const Eigen::Vector3d& position, const E
   return target_pose;
 }
 
-//void robotStateCallback(const xarm_msgs::msg::RobotMsg::SharedPtr msg)
-//{
-//  RCLCPP_INFO(rclcpp::get_logger("robot_state"), "Received robot state");
-//}
-
-using std::placeholders::_1;
 
 class TrackPoseNode : public rclcpp::Node
 {
   public:
+
+    // Publishers
+    rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr desired_pose_publisher;
+
     TrackPoseNode()
     : Node("track_pose_node")
     {
       robot_state_subscriber = this->create_subscription<xarm_msgs::msg::RobotMsg>(
-      "/ufactory/robot_states", rclcpp::SystemDefaultsQoS(), std::bind(&TrackPoseNode::robot_state_callback, this, _1));
+      "/ufactory/robot_states", rclcpp::SystemDefaultsQoS(), std::bind(&TrackPoseNode::robot_state_callback, this, std::placeholders::_1));
 
       switch_input_client = this->create_client<moveit_msgs::srv::ServoCommandType>("/servo_server/switch_command_type");
+
+      desired_pose_publisher = this->create_publisher<geometry_msgs::msg::PoseStamped>("/servo_server/pose_cmds", rclcpp::SystemDefaultsQoS());
     }
 
     /**
@@ -209,72 +205,82 @@ int main(int argc, char * argv[])
 
   node->switch_to_pose_command();
 
-  rclcpp::spin(node);
+  // Create an executor and spin the node in a separate thread
+  auto executor = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
+  executor->add_node(node);
+  
+  std::thread executor_thread([&executor]() {
+    executor->spin();
+  });
+
+  // Wait a bit for the subscriber to receive the first pose
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+  // Wait for valid pose data (check a few times)
+  geometry_msgs::msg::PoseStamped start_pose;
+  int attempts = 0;
+  const int max_attempts = 20;
+  while (attempts < max_attempts)
+  {
+    start_pose = node->get_eef_pose();
+    // Check if we have valid data (non-zero or reasonable values)
+    if (start_pose.pose.position.z > 0.1)  // Adjust threshold as needed
+    {
+      break;
+    }
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    attempts++;
+  }
+
+  if (attempts >= max_attempts)
+  {
+    RCLCPP_WARN(node->get_logger(), "Timeout waiting for valid pose data");
+  }
+  else
+  {
+    // Get path and print the waypoints
+    RCLCPP_INFO(node->get_logger(), "Start pose: %f, %f, %f", 
+                start_pose.pose.position.x, start_pose.pose.position.y, start_pose.pose.position.z);
+    auto path = getPath(start_pose);
+    RCLCPP_INFO(node->get_logger(), "Generated %zu waypoints", path.size());
+    
+    for (size_t i = 0; i < path.size(); ++i)
+    {
+      RCLCPP_INFO(node->get_logger(), "Waypoint %zu: %f, %f, %f", 
+                  i, path[i][0], path[i][1], path[i][2]);
+    }
+
+    // Follow the trajectory while the node continues spinning
+    const double publish_period = 1.0 / PUBLISH_RATE;
+    rclcpp::WallRate rate(1.0 / publish_period);
+    
+    // Create quaternion from start pose orientation
+    Eigen::Quaterniond start_orientation(
+      start_pose.pose.orientation.w,
+      start_pose.pose.orientation.x,
+      start_pose.pose.orientation.y,
+      start_pose.pose.orientation.z
+    );
+    
+    for (auto& waypoint : path)
+    {
+      auto target_pose = getPose(waypoint, start_orientation);
+      target_pose.header.stamp = node->now();
+      target_pose.header.frame_id = start_pose.header.frame_id;  // Use same frame_id as start
+      node->desired_pose_publisher->publish(target_pose);
+      rate.sleep();
+    }
+    
+    RCLCPP_INFO(node->get_logger(), "Trajectory execution complete");
+  }
+
+  // Stop the executor and wait for thread to finish
+  executor->cancel();
+  if (executor_thread.joinable())
+  {
+    executor_thread.join();
+  }
+
   rclcpp::shutdown();
   return 0;
 }
-
-//int main(int argc, char* argv[])
-//{
-//  rclcpp::init(argc, argv);
-//  rclcpp::Node::SharedPtr node = std::make_shared<rclcpp::Node>("servo_tutorial");
-//
-//  // Publishers
-//  auto marker_publisher =
-//      node->create_publisher<visualization_msgs::msg::MarkerArray>("/visualization_marker_array", rclcpp::SystemDefaultsQoS());
-//  auto pose_publisher = node->create_publisher<geometry_msgs::msg::PoseStamped>("/servo_server/pose_cmds",
-//                                                                                rclcpp::SystemDefaultsQoS());
-//  // Subscribers
-//  auto robot_state_subscriber = node->create_subscription<xarm_msgs::msg::RobotMsg>("/ufactory/robot_states", rclcpp::SystemDefaultsQoS(), std::bind(&robotStateCallback, std::placeholders::_1));
-//
-//  // Service clients
-//  auto switch_input_client = node->create_client<moveit_msgs::srv::ServoCommandType>("/servo_server/switch_command_type");
-//
-//  auto executor = std::make_shared<rclcpp::executors::SingleThreadedExecutor>();
-//  executor->add_node(node);
-//
-//  // Spin the node.
-//  std::thread executor_thread([&executor]() { executor->spin(); });
-//
-//  // Generate path
-//  std::vector<Eigen::Vector3d> path = getPath();
-//
-//  // Switch to POSE input type
-//  switch_input_client = node->create_client<moveit_msgs::srv::ServoCommandType>("/servo_server/switch_command_type");
-//  auto request = std::make_shared<moveit_msgs::srv::ServoCommandType::Request>();
-//  request->command_type = moveit_msgs::srv::ServoCommandType::Request::POSE;
-//  if (switch_input_client->wait_for_service(std::chrono::seconds(5)))
-//  {
-//    auto result = switch_input_client->async_send_request(request);
-//    if (result.get()->success)
-//    {
-//      RCLCPP_INFO_STREAM(node->get_logger(), "Switched to input type: POSE");
-//    }
-//    else
-//    {
-//      RCLCPP_WARN_STREAM(node->get_logger(), "Could not switch input to: POSE");
-//    }
-//  }
-//  else
-//  {
-//    RCLCPP_ERROR_STREAM(node->get_logger(), "Failed to call service /servo_server/switch_command_type");
-//  }
-//
-//  //// Follow the trajectory
-//  //const double publish_period = 0.15;
-//  //rclcpp::WallRate rate(1.0 / publish_period);
-//  //for (auto& waypoint : path)
-//  //{
-//  //  auto target_pose = getPose(waypoint, Eigen::Quaterniond(ee_pose.rotation()));
-//  //  target_pose.header.stamp = node->now();
-//  //  pose_publisher->publish(target_pose);
-//  //  rate.sleep();
-//  //}
-//
-//  executor->cancel();
-//  if (executor_thread.joinable())
-//  {
-//    executor_thread.join();
-//  }
-//  rclcpp::shutdown();
-//}
