@@ -8,6 +8,9 @@
 
 #include <xarm_msgs/msg/robot_msg.hpp>
 
+#include <array>
+#include <mutex>
+
 /**
  * \brief Generates the path to follow
  */
@@ -82,29 +85,131 @@ geometry_msgs::msg::PoseStamped getPose(const Eigen::Vector3d& position, const E
 
 using std::placeholders::_1;
 
-class MinimalSubscriber : public rclcpp::Node
+class TrackPoseNode : public rclcpp::Node
 {
   public:
-    MinimalSubscriber()
-    : Node("minimal_subscriber")
+    TrackPoseNode()
+    : Node("track_pose_node")
     {
-      subscription_ = this->create_subscription<xarm_msgs::msg::RobotMsg>(
-      "/ufactory/robot_states", rclcpp::SystemDefaultsQoS(), std::bind(&MinimalSubscriber::topic_callback, this, _1));
+      robot_state_subscriber = this->create_subscription<xarm_msgs::msg::RobotMsg>(
+      "/ufactory/robot_states", rclcpp::SystemDefaultsQoS(), std::bind(&TrackPoseNode::robot_state_callback, this, _1));
+
+      switch_input_client = this->create_client<moveit_msgs::srv::ServoCommandType>("/servo_server/switch_command_type");
     }
 
-  private:
-    void topic_callback(const xarm_msgs::msg::RobotMsg::SharedPtr msg) const
-    // Print 6 float values in msg->pose
+    /**
+     * \brief Get the end-effector pose from the stored robot state.
+     * \return geometry_msgs::PoseStamped with position in meters and orientation as quaternion
+     */
+    geometry_msgs::msg::PoseStamped get_eef_pose()
     {
-      RCLCPP_INFO(this->get_logger(), "I heard robot state: %f, %f, %f, %f, %f, %f", msg->pose[0], msg->pose[1], msg->pose[2], msg->pose[3], msg->pose[4], msg->pose[5]);
+      std::lock_guard<std::mutex> lock(_pose_mutex);
+      
+      geometry_msgs::msg::PoseStamped eef_pose;
+      eef_pose.header.frame_id = "link_base";  // Adjust frame_id as needed
+      eef_pose.header.stamp = this->now();
+      
+      // Convert position from mm to meters
+      eef_pose.pose.position.x = raw_pose[0] / 1000.0;
+      eef_pose.pose.position.y = raw_pose[1] / 1000.0;
+      eef_pose.pose.position.z = raw_pose[2] / 1000.0;
+      
+      // Convert RPY (roll, pitch, yaw) to quaternion
+      Eigen::AngleAxisd roll_angle(raw_pose[3], Eigen::Vector3d::UnitX());
+      Eigen::AngleAxisd pitch_angle(raw_pose[4], Eigen::Vector3d::UnitY());
+      Eigen::AngleAxisd yaw_angle(raw_pose[5], Eigen::Vector3d::UnitZ());
+      Eigen::Quaterniond q = yaw_angle * pitch_angle * roll_angle;
+      
+      eef_pose.pose.orientation.x = q.x();
+      eef_pose.pose.orientation.y = q.y();
+      eef_pose.pose.orientation.z = q.z();
+      eef_pose.pose.orientation.w = q.w();
+      
+      return eef_pose;
     }
-    rclcpp::Subscription<xarm_msgs::msg::RobotMsg>::SharedPtr subscription_;
+
+    /**
+     * \brief Switch to POSE input type
+     * \return true if successful, false otherwise
+     */
+    bool switch_to_pose_command()
+    {
+      auto request = std::make_shared<moveit_msgs::srv::ServoCommandType::Request>();
+      request->command_type = moveit_msgs::srv::ServoCommandType::Request::POSE;
+      
+      if (switch_input_client->wait_for_service(std::chrono::seconds(5)))
+      {
+        auto result = switch_input_client->async_send_request(request);
+        if (rclcpp::spin_until_future_complete(this->shared_from_this(), result) == rclcpp::FutureReturnCode::SUCCESS)
+        {
+          if (result.get()->success)
+          {
+            RCLCPP_INFO_STREAM(this->get_logger(), "Switched to input type: POSE");
+            return true;
+          }
+          else
+          {
+            RCLCPP_WARN_STREAM(this->get_logger(), "Could not switch input to: POSE");
+            return false;
+          }
+        }
+        else
+        {
+          RCLCPP_ERROR_STREAM(this->get_logger(), "Service call failed");
+          return false;
+        }
+      }
+      else
+      {
+        RCLCPP_ERROR_STREAM(this->get_logger(), "Failed to call service /servo_server/switch_command_type");
+        return false;
+      }
+    }
+
+
+  private:
+  
+    // Callbacks
+    void robot_state_callback(const xarm_msgs::msg::RobotMsg::SharedPtr msg)
+    {
+      {
+        std::lock_guard<std::mutex> lock(_pose_mutex);
+        // Store the raw pose: [x, y, z, roll, pitch, yaw]
+        for (size_t i = 0; i < 6; ++i) {
+          raw_pose[i] = msg->pose[i];
+        }
+      }
+
+      // Print the eef pose
+      //auto eef_pose = get_eef_pose();
+      //RCLCPP_INFO(
+      //  this->get_logger(), "I heard robot state: %f, %f, %f, %f, %f, %f, %f", 
+      //  eef_pose.pose.position.x, eef_pose.pose.position.y, eef_pose.pose.position.z, 
+      //  eef_pose.pose.orientation.x, eef_pose.pose.orientation.y, eef_pose.pose.orientation.z,
+      //  eef_pose.pose.orientation.w
+      //);
+      //RCLCPP_INFO(this->get_logger(), "I heard robot state: %f, %f, %f, %f, %f, %f", raw_pose[0], raw_pose[1], raw_pose[2], raw_pose[3], raw_pose[4], raw_pose[5]);
+    }
+
+    // Subscribers
+    rclcpp::Subscription<xarm_msgs::msg::RobotMsg>::SharedPtr robot_state_subscriber;
+
+    // Service clients
+    rclcpp::Client<moveit_msgs::srv::ServoCommandType>::SharedPtr switch_input_client;
+
+    std::array<float, 6> raw_pose;  // [x, y, z, roll, pitch, yaw] - position in mm, orientation in rad
+    mutable std::mutex _pose_mutex;  // Protects raw_pose_ for thread-safe access
+
 };
 
 int main(int argc, char * argv[])
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<MinimalSubscriber>());
+  auto node = std::make_shared<TrackPoseNode>();
+
+  node->switch_to_pose_command();
+
+  rclcpp::spin(node);
   rclcpp::shutdown();
   return 0;
 }
