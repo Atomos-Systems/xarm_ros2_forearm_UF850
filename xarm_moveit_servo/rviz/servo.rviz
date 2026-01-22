@@ -5,10 +5,6 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /MotionPlanning1
-        - /MotionPlanning1/Scene Robot1
-        - /MotionPlanning1/Planning Request1
-        - /MotionPlanning1/Planned Path1
-        - /MarkerArray1
       Splitter Ratio: 0.46875
     Tree Height: 583
   - Class: rviz_common/Selection
@@ -291,6 +287,50 @@ Visualization Manager:
         History Policy: Keep Last
         Reliability Policy: Reliable
         Value: visualization_marker_array
+      Value: true
+    - Class: rviz_default_plugins/TF
+      All Enabled: false
+      Enabled: false
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        link1:
+          Value: false
+        link2:
+          Value: false
+        link3:
+          Value: false
+        link4:
+          Value: false
+        link5:
+          Value: false
+        link6:
+          Value: false
+        link_eef:
+          Value: true
+        target_pose_frame:
+          Value: true
+      Marker Alpha: 1
+      Marker Scale: 0.3
+      Name: TF
+      Show Arrows: false
+      Show Axes: true
+      Show Names: false
+      Update Interval: 0
+      Value: true
+    - Class: rviz_default_plugins/Axes
+      Enabled: true
+      Length: 0.1
+      Name: link_eef_axes
+      Radius: 0.01
+      Reference Frame: link_eef
+      Value: true
+    - Class: rviz_default_plugins/Axes
+      Enabled: true
+      Length: 0.15
+      Name: target_pose_axes
+      Radius: 0.02
+      Reference Frame: target_pose_frame
       Value: true
   Enabled: true
   Global Options:
