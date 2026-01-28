@@ -31,8 +31,12 @@ find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(moveit_msgs REQUIRED)
 find_package(xarm_msgs REQUIRED)
+find_package(phidgets_api REQUIRED)
+find_package(phidgets_msgs REQUIRED)
+find_package(phidgets_stepper REQUIRED)
+find_package(phidgets_high_speed_encoder REQUIRED)
 
-set(dependencies "rclcpp" "std_msgs" "geometry_msgs" "moveit_msgs" "xarm_msgs" "moveit")
+set(dependencies "rclcpp" "std_msgs" "geometry_msgs" "moveit_msgs" "xarm_msgs" "moveit" "phidgets_msgs")
 
 include_directories(
   include
@@ -110,6 +114,25 @@ target_link_libraries(add_scene
   ${ament_LIBRARIES}
 )
 
+add_executable(probe_random test/probe_random.cpp)
+ament_target_dependencies(probe_random
+  ${dependencies}
+  phidgets_msgs
+)
+target_link_libraries(probe_random
+  xarm_planner
+  ${ament_LIBRARIES}
+)
+
+add_executable(test_custom test/test_custom.cpp)
+ament_target_dependencies(test_custom
+  ${dependencies}
+)
+target_link_libraries(test_custom
+  xarm_planner
+  ${ament_LIBRARIES}
+)
+
 add_executable(test_xarm_planner_client_joint test/test_xarm_planner_client_joint.cpp)
 ament_target_dependencies(test_xarm_planner_client_joint
   ${dependencies}
@@ -160,6 +183,8 @@ install(
   test_xarm_gripper_planner_client_joint
   test_lite_gripper_realmove
   add_scene
+  test_custom
+  probe_random
   LIBRARY DESTINATION lib
   ARCHIVE DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}

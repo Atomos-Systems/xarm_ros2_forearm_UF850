@@ -18,6 +18,10 @@
   <depend>xarm_msgs</depend>
   <depend>xarm_description</depend>
   <depend>xarm_moveit_config</depend>
+  <depend>phidgets_api</depend>
+  <depend>phidgets_msgs</depend>
+  <depend>phidgets_stepper</depend>
+  <depend>phidgets_high_speed_encoder</depend>
 
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
