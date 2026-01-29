@@ -80,9 +80,6 @@ struct LoopTimingSample {
 
 std::vector<LoopTimingSample> loop_log;
 
-
-bool logging_active = false;
-
 void exit_sig_handler(int signum)
 {
     fprintf(stderr, "[probe_random] Ctrl-C caught, exit process...\n");
@@ -126,20 +123,10 @@ std::vector<geometry_msgs::msg::Pose> loadCSVPoses (const std::string& filepath)
         pose.position.y = (std::stod(y_str) / 1000.0) + DISTAL_LOC_Y + CALIBRATION_Y;
         pose.position.z = (std::stod(z_str) / 1000.0) + 0.004 + 0.06 + CALIBRATION_Z;
 
-        // Box Coords
-        // x: 248 y: 450 z: possible 2cm up
-        // pose.position.x = 0.1;
-        // pose.position.y = 0.4 + 83.5/1000.0;
-        // pose.position.z = 0.05 + 136.39/1000.0 - 10.0/1000.0;
-
         pose.orientation.x = std::stod(qx);
         pose.orientation.y = std::stod(qy);
         pose.orientation.z = std::stod(qz);
         pose.orientation.w = std::stod(qw);
-        // pose.orientation.x = 1;
-        // pose.orientation.y = 0;
-        // pose.orientation.z = 0;
-        // pose.orientation.w = 0;
 
         poses.push_back(pose);
     }
@@ -373,11 +360,8 @@ int main(int argc, char** argv)
 
     xarm_planner::XArmPlanner planner(node, group_name);
 
-    // Create planning scene interface and add collision object
+    // Create planning scene interface
     moveit::planning_interface::PlanningSceneInterface planning_scene_interface;
-
-    // Sleep briefly to allow the collision object to propagate
-    rclcpp::sleep_for(std::chrono::seconds(1));
 
     // Ensure output dir exists
     // std::filesystem::create_directories("data_out");
@@ -390,7 +374,7 @@ int main(int argc, char** argv)
     // Example: 2025_09_26_15_42_08
     std::string date_str = date_ss.str();
 
-    std::string base_dir = "data_out_" + date_str;
+    std::string base_dir = "data/data_out_" + date_str;
     std::filesystem::create_directories(base_dir);
 
     // Open streams once, in append or trunc+single open
@@ -534,10 +518,6 @@ int main(int argc, char** argv)
     req->channel = 0;
     result_future = client->async_send_request(req);
 
-    // RCLCPP_INFO(node->get_logger(), "Zeroing Stepper...");
-    // req_step = std::make_shared<std_srvs::srv::Trigger::Request>();
-    // result_step = client_stepper->async_send_request(req_step);
-
     rclcpp::sleep_for(std::chrono::milliseconds(2000));
     // moveStepperTo(stepper_pub, node,  0.0, 1.0);
 
@@ -551,8 +531,8 @@ int main(int argc, char** argv)
     // sendProbeState(node, zmq_pub, false, -1);
     // RCLCPP_INFO(node->get_logger(), "Baseline Recording done");
 
+    /* Main Capture Loop */
     RCLCPP_INFO(node->get_logger(), "Starting Probing Loop...");
-
 
     for (size_t idx = 0; idx < poses.size(); ++idx) {
         const rclcpp::Time loop_start = steady_clock.now();
@@ -605,7 +585,7 @@ int main(int argc, char** argv)
     exec.cancel();
     spin_thread.join();
 
-    // 3) Command samples
+    // Command samples
     std::ofstream cmd_file(base_dir + "/command_log.csv");
     cmd_file << "test_idx,time_s,is_recording\n";
     for (auto &s : command_log) {
@@ -615,7 +595,7 @@ int main(int argc, char** argv)
             << (s.is_recording ? 1 : 0) << "\n";
     }
 
-    // 5) Failed‐point indices
+    // Failed‐point indices
     std::ofstream fail_file(base_dir + "/failed_indices.csv");
     // optional header:
     fail_file << "test_idx\n";
