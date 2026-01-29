@@ -187,7 +187,7 @@ void moveStepperUntilForce(
   double         velocity,
   double         force_threshold)
 {
-    // 1) Start the step _towards_ your target
+    // Start the step _towards_ your target
     phidgets_msgs::msg::StepperCommand cmd;
     cmd.mode     = phidgets_msgs::msg::StepperCommand::CONTROL_MODE_STEP;
     cmd.target   = target;
@@ -241,7 +241,7 @@ void moveStepperUntilForceGreater(
   double         velocity,
   double         force_threshold)
 {
-    // 1) Start the step _towards_ your target
+    // Start the step _towards_ your target
     phidgets_msgs::msg::StepperCommand cmd;
     cmd.mode     = phidgets_msgs::msg::StepperCommand::CONTROL_MODE_STEP;
     cmd.target   = target;
