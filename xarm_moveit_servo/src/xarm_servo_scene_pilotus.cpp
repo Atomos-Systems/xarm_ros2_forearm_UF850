@@ -24,7 +24,7 @@
 #define TABLE_Z_MAX 0.02
 #define Z_AXIS_RAISE -0.016 // in m
 
-#define X_MAX 0.8
+#define X_MAX 1.2
 #define Y_MAX 0.6
 #define WALL_X_DIM 1.5
 #define WALL_Y_DIM 0.15
