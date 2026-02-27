@@ -33,6 +33,10 @@
   <xacro:arg name="geometry_mesh_filename" default=""/>
   <xacro:arg name="geometry_mesh_origin_xyz" default="0 0 0"/>
   <xacro:arg name="geometry_mesh_origin_rpy" default="0 0 0"/>
+  <xacro:arg name="geometry_origin_xyz" default="auto"/>
+  <xacro:arg name="geometry_origin_rpy" default="auto"/>
+  <xacro:arg name="joint_eef_origin_xyz" default="0 0 0"/>
+  <xacro:arg name="joint_eef_origin_rpy" default="0 0 0"/>
   <xacro:arg name="geometry_mesh_tcp_xyz" default="0 0 0"/>
   <xacro:arg name="geometry_mesh_tcp_rpy" default="0 0 0"/>
 
@@ -62,6 +66,8 @@
     geometry_length="$(arg geometry_length)" geometry_width="$(arg geometry_width)"
     geometry_mesh_filename="$(arg geometry_mesh_filename)"
     geometry_mesh_origin_xyz="$(arg geometry_mesh_origin_xyz)" geometry_mesh_origin_rpy="$(arg geometry_mesh_origin_rpy)"
+    geometry_origin_xyz="$(arg geometry_origin_xyz)" geometry_origin_rpy="$(arg geometry_origin_rpy)"
+    joint_eef_origin_xyz="$(arg joint_eef_origin_xyz)" joint_eef_origin_rpy="$(arg joint_eef_origin_rpy)"
     geometry_mesh_tcp_xyz="$(arg geometry_mesh_tcp_xyz)" geometry_mesh_tcp_rpy="$(arg geometry_mesh_tcp_rpy)"
     robot_ip="$(arg robot_ip)" report_type="$(arg report_type)"
     baud_checkset="$(arg baud_checkset)" default_gripper_baud="$(arg default_gripper_baud)"

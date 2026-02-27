@@ -269,6 +269,10 @@ class MoveItConfigsBuilder(ParameterBuilder):
         geometry_mesh_filename = get_param_str('geometry_mesh_filename', '')
         geometry_mesh_origin_xyz = get_list_param_str('geometry_mesh_origin_xyz', '0 0 0')
         geometry_mesh_origin_rpy = get_list_param_str('geometry_mesh_origin_rpy', '0 0 0')
+        geometry_origin_xyz = get_param_str('geometry_origin_xyz', 'auto')
+        geometry_origin_rpy = get_param_str('geometry_origin_rpy', 'auto')
+        joint_eef_origin_xyz = get_list_param_str('joint_eef_origin_xyz', '0 0 0')
+        joint_eef_origin_rpy = get_list_param_str('joint_eef_origin_rpy', '0 0 0')
         geometry_mesh_tcp_xyz = get_list_param_str('geometry_mesh_tcp_xyz', '0 0 0')
         geometry_mesh_tcp_rpy = get_list_param_str('geometry_mesh_tcp_rpy', '0 0 0')
 
@@ -316,6 +320,10 @@ class MoveItConfigsBuilder(ParameterBuilder):
             'geometry_mesh_filename': geometry_mesh_filename,
             'geometry_mesh_origin_xyz': geometry_mesh_origin_xyz,
             'geometry_mesh_origin_rpy': geometry_mesh_origin_rpy,
+            'geometry_origin_xyz': geometry_origin_xyz,
+            'geometry_origin_rpy': geometry_origin_rpy,
+            'joint_eef_origin_xyz': joint_eef_origin_xyz,
+            'joint_eef_origin_rpy': joint_eef_origin_rpy,
             'geometry_mesh_tcp_xyz': geometry_mesh_tcp_xyz,
             'geometry_mesh_tcp_rpy': geometry_mesh_tcp_rpy,
         }

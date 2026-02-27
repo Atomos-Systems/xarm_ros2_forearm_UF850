@@ -15,6 +15,8 @@
     geometry_mesh_filename:=''
     geometry_mesh_origin_xyz:='0 0 0'
     geometry_mesh_origin_rpy:='0 0 0'
+    geometry_origin_xyz:='auto'
+    geometry_origin_rpy:='auto'
     geometry_mesh_tcp_xyz:='0 0 0'
     geometry_mesh_tcp_rpy:='0 0 0'
     ">
@@ -41,8 +43,21 @@
         <xacro:property name="_origin_y" value="${geometry_radius}"/>
         <xacro:property name="_tcp_z" value="${geometry_radius * 2}"/>
       </xacro:unless>
-      <xacro:property name="_origin_xyz" value="0 0 ${_origin_y}"/>
-      <xacro:property name="_origin_rpy" value="0 0 0"/>
+      <xacro:property name="_auto_origin_xyz" value="0 0 ${_origin_y}"/>
+      <xacro:property name="_auto_origin_rpy" value="0 0 0"/>
+      <xacro:if value="${geometry_origin_xyz == 'auto'}">
+        <xacro:property name="_origin_xyz" value="${_auto_origin_xyz}"/>
+        <xacro:property name="_origin_rpy" value="${_auto_origin_rpy}"/>
+      </xacro:if>
+      <xacro:unless value="${geometry_origin_xyz == 'auto'}">
+        <xacro:property name="_origin_xyz" value="${geometry_origin_xyz}"/>
+        <xacro:if value="${geometry_origin_rpy == 'auto'}">
+          <xacro:property name="_origin_rpy" value="0 0 0"/>
+        </xacro:if>
+        <xacro:unless value="${geometry_origin_rpy == 'auto'}">
+          <xacro:property name="_origin_rpy" value="${geometry_origin_rpy}"/>
+        </xacro:unless>
+      </xacro:unless>
       <xacro:property name="_tcp_xyz" value="0 0 ${_tcp_z}"/>
       <xacro:property name="_tcp_rpy" value="0 0 0"/>
     </xacro:unless>

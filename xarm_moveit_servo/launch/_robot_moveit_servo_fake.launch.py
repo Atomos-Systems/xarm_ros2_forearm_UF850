@@ -59,6 +59,10 @@ def launch_setup(context, *args, **kwargs):
     geometry_mesh_filename = LaunchConfiguration('geometry_mesh_filename', default='')
     geometry_mesh_origin_xyz = LaunchConfiguration('geometry_mesh_origin_xyz', default='"0 0 0"')
     geometry_mesh_origin_rpy = LaunchConfiguration('geometry_mesh_origin_rpy', default='"0 0 0"')
+    geometry_origin_xyz = LaunchConfiguration('geometry_origin_xyz', default='auto')
+    geometry_origin_rpy = LaunchConfiguration('geometry_origin_rpy', default='auto')
+    joint_eef_origin_xyz = LaunchConfiguration('joint_eef_origin_xyz', default='"0 0 0"')
+    joint_eef_origin_rpy = LaunchConfiguration('joint_eef_origin_rpy', default='"0 0 0"')
     geometry_mesh_tcp_xyz = LaunchConfiguration('geometry_mesh_tcp_xyz', default='"0 0 0"')
     geometry_mesh_tcp_rpy = LaunchConfiguration('geometry_mesh_tcp_rpy', default='"0 0 0"')
     
@@ -119,6 +123,10 @@ def launch_setup(context, *args, **kwargs):
         geometry_mesh_filename=geometry_mesh_filename,
         geometry_mesh_origin_xyz=geometry_mesh_origin_xyz,
         geometry_mesh_origin_rpy=geometry_mesh_origin_rpy,
+        geometry_origin_xyz=geometry_origin_xyz,
+        geometry_origin_rpy=geometry_origin_rpy,
+        joint_eef_origin_xyz=joint_eef_origin_xyz,
+        joint_eef_origin_rpy=joint_eef_origin_rpy,
         geometry_mesh_tcp_xyz=geometry_mesh_tcp_xyz,
         geometry_mesh_tcp_rpy=geometry_mesh_tcp_rpy,
         

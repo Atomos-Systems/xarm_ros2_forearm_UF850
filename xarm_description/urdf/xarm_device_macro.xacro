@@ -31,6 +31,10 @@
     geometry_mesh_filename:=''
     geometry_mesh_origin_xyz:='0 0 0'
     geometry_mesh_origin_rpy:='0 0 0'
+    geometry_origin_xyz:='auto'
+    geometry_origin_rpy:='auto'
+    joint_eef_origin_xyz:='0 0 0'
+    joint_eef_origin_rpy:='0 0 0'
     geometry_mesh_tcp_xyz:='0 0 0'
     geometry_mesh_tcp_rpy:='0 0 0' 
     robot_ip:=''
@@ -224,7 +228,7 @@
       <link name="${prefix}link_eef"/>
     </xacro:unless>
     <joint name="${prefix}joint_eef" type="fixed">
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="${joint_eef_origin_xyz}" rpy="${joint_eef_origin_rpy}" />
       <parent link="${prefix}link${dof}" />
       <child link="${prefix}link_eef" />
     </joint>
@@ -274,6 +278,7 @@
         geometry_length="${geometry_length}" geometry_width="${geometry_width}"
         geometry_mesh_filename="${geometry_mesh_filename}" 
         geometry_mesh_origin_xyz="${geometry_mesh_origin_xyz}" geometry_mesh_origin_rpy="${geometry_mesh_origin_rpy}"
+        geometry_origin_xyz="${geometry_origin_xyz}" geometry_origin_rpy="${geometry_origin_rpy}"
         geometry_mesh_tcp_xyz="${geometry_mesh_tcp_xyz}" geometry_mesh_tcp_rpy="${geometry_mesh_tcp_rpy}"
       />
     </xacro:if>
