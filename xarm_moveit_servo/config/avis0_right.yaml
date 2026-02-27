@@ -3,21 +3,22 @@
 # Parameters are loaded by uf850_moveit_servo_fake.launch.py and uf850_moveit_servo_realmove.launch.py
 
 # Add custom geometry (box, cylinder, sphere, mesh) instead of gripper
-add_other_geometry: false
+add_other_geometry: true
 
 # Geometry type: box, cylinder, sphere, or mesh
 geometry_type: box
 
 # Geometry dimensions (for box: length x width x height; for cylinder/sphere: radius and height)
-geometry_length: 0.1
+geometry_length: 0.26
 geometry_width: 0.1
 geometry_height: 0.1
 geometry_radius: 0.1
-geometry_mass: 0.1
+geometry_mass: 1.2
 
 # joint_eef origin - transform from link6 to link_eef (xyz in meters, rpy in radians)
-joint_eef_origin_xyz: "0 0 0"
-joint_eef_origin_rpy: "0 0 0"
+# this will also be the origin of link_eef
+joint_eef_origin_xyz: "0.00908 0.05943 0.2074"
+joint_eef_origin_rpy: "0 -1.57 0"
 
 # Geometry origin - used for mesh geometry (visual/collision origin offset)
 geometry_mesh_origin_xyz: "0 0 0"
@@ -25,5 +26,5 @@ geometry_mesh_origin_rpy: "0 0 0"
 
 # Box/cylinder/sphere origin - use "auto" for default (box/cyl: 0 0 height/2, sphere: 0 0 radius)
 # Set custom values to override, e.g. "0 0 0.05" for xyz
-geometry_origin_xyz: auto
+geometry_origin_xyz: "-0.08 -0.05943 0.00908"
 geometry_origin_rpy: auto
