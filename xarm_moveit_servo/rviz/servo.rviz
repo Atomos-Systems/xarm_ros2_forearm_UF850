@@ -329,7 +329,7 @@ Visualization Manager:
       Enabled: true
       Length: 0.15
       Name: target_pose_axes
-      Radius: 0.02
+      Radius: 0.01
       Reference Frame: target_pose_frame
       Value: true
   Enabled: true
