@@ -17,11 +17,11 @@
 #include <string>
 #include <vector>
 
-#define TABLE_X_DIM 1.5
-#define TABLE_Y_DIM 1.5
+#define TABLE_X_DIM 0.23
+#define TABLE_Y_DIM 0.4
 #define TABLE_Z_DIM 0.05
-#define TABLE_X_MIN 0.1
-#define TABLE_Z_MAX 0.02
+#define TABLE_X_MIN 0.75
+#define TABLE_Z_MAX 0.15
 #define Z_AXIS_RAISE -0.016 // in m
 
 #define X_MAX 1.2
