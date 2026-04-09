@@ -1,0 +1,33 @@
+# Planning scene specification for the Pilotus UF850 setup.
+# Units: meters, quaternion orientation as [qx, qy, qz, qw].
+
+planning_frame: link_base
+
+objects:
+  # Table
+  - id: table1
+    shape: box
+    dimensions: [1.5, 1.5, 0.05]
+    position: [0.865, 0.0, 0.0]
+    orientation: [0.0, 0.0, 0.0, 1.0]
+
+  # Left wall (positive Y)
+  - id: wall1
+    shape: box
+    dimensions: [1.5, 0.15, 1.5]
+    position: [0.45, 0.675, 0.75]
+    orientation: [0.0, 0.0, 0.0, 1.0]
+
+  # Right wall (negative Y)
+  - id: wall2
+    shape: box
+    dimensions: [1.5, 0.15, 1.5]
+    position: [0.45, -0.675, 0.75]
+    orientation: [0.0, 0.0, 0.0, 1.0]
+
+  # Front wall (positive X)
+  - id: wall3
+    shape: box
+    dimensions: [0.15, 1.5, 1.5]
+    position: [1.2, 0.0, 0.75]
+    orientation: [0.0, 0.0, 0.0, 1.0]
