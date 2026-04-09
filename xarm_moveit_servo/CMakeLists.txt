@@ -30,6 +30,8 @@ find_package(moveit_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(moveit_ros_planning REQUIRED)
 find_package(xarm_msgs REQUIRED)
+find_package(yaml-cpp REQUIRED)
+
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
@@ -75,10 +77,11 @@ add_executable(xarm_servo_scene
 )
 ament_target_dependencies(xarm_servo_scene ${THIS_PACKAGE_INCLUDE_DEPENDS})
 
-add_executable(xarm_servo_scene_pilotus
-  src/xarm_servo_scene_pilotus.cpp
+add_executable(xarm_servo_scene_from_yaml
+  src/xarm_servo_scene_from_yaml.cpp
 )
-ament_target_dependencies(xarm_servo_scene_pilotus ${THIS_PACKAGE_INCLUDE_DEPENDS})
+ament_target_dependencies(xarm_servo_scene_from_yaml ${THIS_PACKAGE_INCLUDE_DEPENDS})
+target_link_libraries(xarm_servo_scene_from_yaml yaml-cpp)
 
 
 add_executable(xarm_track_pose
@@ -92,7 +95,7 @@ install(TARGETS
   xarm_joystick_input_node
   xarm_keyboard_input
   xarm_servo_scene
-  xarm_servo_scene_pilotus
+  xarm_servo_scene_from_yaml
   xarm_track_pose
   EXPORT export_${PROJECT_NAME}
   LIBRARY DESTINATION lib

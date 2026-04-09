@@ -11,7 +11,6 @@ import yaml
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument, OpaqueFunction
-from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.substitutions import FindPackageShare
@@ -53,7 +52,7 @@ def _launch_setup(context, *args, **kwargs):
     velocity_control = LaunchConfiguration('velocity_control', default=False)
     add_gripper = LaunchConfiguration('add_gripper', default=False)
     add_vacuum_gripper = LaunchConfiguration('add_vacuum_gripper', default=False)
-    load_planning_scene = LaunchConfiguration('load_planning_scene', default='true')
+    scene_spec_file = LaunchConfiguration('scene_spec_file', default='').perform(context)
 
     launch_args = {
         'dof': '6',
@@ -74,20 +73,29 @@ def _launch_setup(context, *args, **kwargs):
         launch_arguments=launch_args.items(),
     )
 
-    planning_scene_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(PathJoinSubstitution([FindPackageShare('xarm_moveit_servo'), 'launch', 'xarm_moveit_servo_scene_pilotus.launch.py'])),
-        condition=IfCondition(load_planning_scene),
-    )
+    actions = [robot_moveit_servo_launch]
 
-    return [robot_moveit_servo_launch, planning_scene_launch]
+    if scene_spec_file:
+        if not os.path.isfile(scene_spec_file):
+            raise FileNotFoundError(
+                f"[uf850_moveit_servo_fake] scene_spec_file does not exist: '{scene_spec_file}'"
+            )
+        planning_scene_launch = IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(PathJoinSubstitution([FindPackageShare('xarm_moveit_servo'), 'launch', 'xarm_moveit_servo_scene_from_yaml.launch.py'])),
+            launch_arguments={'scene_spec_file': scene_spec_file}.items(),
+        )
+        actions.append(planning_scene_launch)
+
+    return actions
 
 
 def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
-            'load_planning_scene',
-            default_value='true',
-            description='Whether to load the planning scene (default: true).'
+            'scene_spec_file',
+            default_value='',
+            description='Absolute path to a YAML file defining the planning scene. '
+                        'If not specified, no planning scene is loaded.'
         ),
         DeclareLaunchArgument(
             'eef_config_file',
@@ -95,4 +103,4 @@ def generate_launch_description():
             description='Path to uf850_eef_params.yaml. If empty, uses package default.'
         ),
         OpaqueFunction(function=_launch_setup),
-    ]) 
+    ])
